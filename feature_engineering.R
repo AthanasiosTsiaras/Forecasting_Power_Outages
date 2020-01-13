@@ -8,7 +8,7 @@ set.seed(69)
 
 ## Relevant columns from outage.csv
 predict_columns <- c("TR_TIME", "TR_TIME_CLOCK_FK", "FAIL_FAC_ID", "FAC_TYPE_DE", "FACILE_DESC", 
-                     "FEED", "LONG", "LAT","LIN", "UPSTR_MUL_DEV", "UPSTRDEV_TYPE", "MWF_REGION", "REASON_DE")
+                     "FEED", "LONG", "LAT","LINE", "UPSTR_MUL_DEV", "UPSTRDEV_TYPE", "MWF_REGION", "REASON_DE")
 
 outage <- read.csv("data/outage.csv", header = TRUE)[, predict_columns]
 outage <- filter(outage, REASON_DE == "Weather") # only need the weather related outages
@@ -46,7 +46,7 @@ for (row in 1:length(outage[,1])){ # Applying the function to every row of the d
 
 
 outage$METAR_ID <-outage_reg
-# mapply(distm, x = c(outage$LATITUDE, Regions$Lat), y = c(outage$LATITUDE, Regions$Lat))
+# mapply(distm, x = c(outage$LAT, Regions$Lat), y = c(outage$LAT, Regions$Lat))
 
 # 2. Reading the weather dataset
 
@@ -59,7 +59,7 @@ weather$Date <- as.POSIXct(paste(as.character(weather$TIME_GMT), weather$HOUR_OF
 weather_col <- c("Date" ,"METAR_ID", "AIR_TEMPERATURE_F", "AIR_TEMPERATURE_FEELS_LIKE_F", 
                  "DEWPOINT_TEMPERATURE_F", "RELATIVE_HUMIDITY", "WIND_SPEED_MPH", "WIND_GUST_MPH", "WIND_DIRECTION_DEG",
                  "CLOUD_AMOUNT", "PRECIPITATION_PAST_1HOUR_IN", "SNOWFALL_PAST_1HOUR_IN", "ATMOSPHERIC_PRESSURE_MB", 
-                 "DIRECT_NORMAL_RADIATION", "DIFFUSE_HOZ_RADIATION", "DOWNWARD_SOLAR_RADIATION", "LEAF_COVERAGE")
+                 "DI_NORL_RADIATION", "DIFF_HOZ_RADIATION", "DOWN_SLR_RAD", "LEAF_COVERAGE")
 
 weather <- weather[, weather_col] # Keeping relevant columns
 
@@ -74,10 +74,10 @@ historic <- historic[complete.cases(historic),]
 final <- inner_join(weather, historic, by = c("Date", "METAR_ID"))
 #rm(outage, historic, weather)
 
-# final <- final %>% select(-c( DIRECT_NORMAL_RADIATION, DIFFUSE_HOZ_RADIATION,
-#                              DOWNWARD_SOLAR_RADIATION, UPSTR_MUL_DEV, MWF_REGION))
-final <- final %>% select(-c( DIRECT_NORMAL_RADIATION, DIFFUSE_HOZ_RADIATION,
-                              DOWNWARD_SOLAR_RADIATION, UPSTR_MUL_DEV)) # With Region
+# final <- final %>% select(-c( DI_NORL_RADIATION, DIFF_HOZ_RADIATION,
+#                              DOWN_SLR_RAD, UPSTR_MUL_DEV, MWF_REGION))
+final <- final %>% select(-c( DI_NORL_RADIATION, DIFF_HOZ_RADIATION,
+                              DOWN_SLR_RAD, UPSTR_MUL_DEV)) # With Region
 
 
 final$METAR_ID <- as.factor(final$METAR_ID)
