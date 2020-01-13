@@ -11,13 +11,13 @@ predict_columns <- c("TR_TIME", "TR_TIME_CLOCK_FK", "FAIL_FAC_ID", "FAC_TYPE_DE"
                      "FEED", "LONG", "LAT","LIN", "UPSTR_MUL_DEV", "UPSTRDEV_TYPE", "MWF_REGION", "REASON_DE")
 
 outage <- read.csv("data/outage.csv", header = TRUE)[, predict_columns]
-outage <- filter(outage, REASON_DESC == "Weather") # only need the weather related outages
+outage <- filter(outage, REASON_DE == "Weather") # only need the weather related outages
 
 # Setting a datetime column named Date and dropping the rest
 outage$TR_TIME <- as.Date(outage$TR_TIME, format="%d-%b-%y")
 outage$TR_TIME_CLOCK_FK <- format(as.POSIXct((outage$TR_TIME_CLOCK_FK), origin = "1970-01-01", tz = "UTC"), "%H")
 outage$Date <- as.POSIXct(paste(as.character(outage$TR_TIME), outage$TR_TIME_CLOCK_FK), format=c('%Y-%m-%d %H'))
-drops <- c("TR_TIME", "TR_TIME_CLOCK_FK", "REASON_DESC")
+drops <- c("TR_TIME", "TR_TIME_CLOCK_FK", "REASON_DE")
 outage <- outage[ , !(names(outage) %in% drops)]
 
 # Removing NAs
@@ -63,10 +63,10 @@ weather_col <- c("Date" ,"METAR_ID", "AIR_TEMPERATURE_F", "AIR_TEMPERATURE_FEELS
 
 weather <- weather[, weather_col] # Keeping relevant columns
 
-historic <- outage %>% complete(Date = seq(from = min(Date), to = max(Date), by="hour"), FAILED_FACILITY_ID)
-historic$Y <- ifelse(is.na(historic$FACILITY_TYPE_DESC), 0, 1)
+historic <- outage %>% complete(Date = seq(from = min(Date), to = max(Date), by="hour"), FAIL_FAC_ID)
+historic$Y <- ifelse(is.na(historic$FAC_TYPE_DESC), 0, 1)
 historic$Y <- as.factor(historic$Y)
-historic <- historic %>% arrange(FAILED_FACILITY_ID, desc(Y)) %>% fill(names(outage[, c(2:10, 12)]), .direction = "down")
+historic <- historic %>% arrange(FAIL_FAC_ID, desc(Y)) %>% fill(names(outage[, c(2:10, 12)]), .direction = "down")
 
 #historic <- historic %>% arrange(Date) %>% fill(names(outage[, c(2:10, 12)]), .direction = "up")
 historic <- historic[complete.cases(historic),]
@@ -75,20 +75,20 @@ final <- inner_join(weather, historic, by = c("Date", "METAR_ID"))
 #rm(outage, historic, weather)
 
 # final <- final %>% select(-c( DIRECT_NORMAL_RADIATION, DIFFUSE_HOZ_RADIATION,
-#                              DOWNWARD_SOLAR_RADIATION, UPSTREAM_MULTI_DEV, MWF_REGION))
+#                              DOWNWARD_SOLAR_RADIATION, UPSTR_MUL_DEV, MWF_REGION))
 final <- final %>% select(-c( DIRECT_NORMAL_RADIATION, DIFFUSE_HOZ_RADIATION,
-                              DOWNWARD_SOLAR_RADIATION, UPSTREAM_MULTI_DEV)) # With Region
+                              DOWNWARD_SOLAR_RADIATION, UPSTR_MUL_DEV)) # With Region
 
 
 final$METAR_ID <- as.factor(final$METAR_ID)
 final$MWF_REGION <- as.factor(final$MWF_REGION)
-final$FAILED_FACILITY_ID <- as.factor(final$FAILED_FACILITY_ID)
-final$FEEDER <- as.factor(final$FEEDER)
-final$LINE_FK <- as.factor(final$LINE_FK)
+final$FAIL_FAC_ID <- as.factor(final$FAIL_FAC_ID)
+final$FEEDER <- as.factor(final$FEED)
+final$LINE <- as.factor(final$LINE)
 
 final$Date <- substr(final$Date, 1, 10)
-final <- final %>% group_by(Date, METAR_ID, MWF_REGION, LEAF_COVERAGE, FAILED_FACILITY_ID, FACILITY_TYPE_DESC,FACILITY_SUBTYPE_DESC,
-                            FEEDER, LONGITUDE, LATITUDE, LINE_FK, UPSTREAM_DEV_TYPE, Y) %>% 
+final <- final %>% group_by(Date, METAR_ID, MWF_REGION, LEAF_COVERAGE, FAIL_FAC_ID, FAC_TYPE_DESC,FAC_STYPE_DES,
+                            FEEDER, LONGITUDE, LATITUDE, LINE, UPSTREAM_DEV_TYPE, Y) %>% 
         summarise(
         
         air_temp_min = min(AIR_TEMPERATURE_F),
