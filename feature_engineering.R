@@ -7,17 +7,17 @@ library(caret)
 set.seed(69)
 
 ## Relevant columns from outage.csv
-predict_columns <- c("TROUBLE_TIME", "TROUBLE_TIME_CLOCK_FK", "FAILED_FACILITY_ID", "FACILITY_TYPE_DESC", "FACILITY_SUBTYPE_DESC", 
-                     "FEEDER", "LONGITUDE", "LATITUDE","LINE_FK", "UPSTREAM_MULTI_DEV", "UPSTREAM_DEV_TYPE", "MWF_REGION", "REASON_DESC")
+predict_columns <- c("TR_TIME", "TR_TIME_CLOCK_FK", "FAIL_FAC_ID", "FAC_TYPE_DE", "FACILE_DESC", 
+                     "FEED", "LONG", "LAT","LIN", "UPSTR_MUL_DEV", "UPSTRDEV_TYPE", "MWF_REGION", "REASON_DE")
 
 outage <- read.csv("data/outage.csv", header = TRUE)[, predict_columns]
 outage <- filter(outage, REASON_DESC == "Weather") # only need the weather related outages
 
 # Setting a datetime column named Date and dropping the rest
-outage$TROUBLE_TIME <- as.Date(outage$TROUBLE_TIME, format="%d-%b-%y")
-outage$TROUBLE_TIME_CLOCK_FK <- format(as.POSIXct((outage$TROUBLE_TIME_CLOCK_FK), origin = "1970-01-01", tz = "UTC"), "%H")
-outage$Date <- as.POSIXct(paste(as.character(outage$TROUBLE_TIME), outage$TROUBLE_TIME_CLOCK_FK), format=c('%Y-%m-%d %H'))
-drops <- c("TROUBLE_TIME", "TROUBLE_TIME_CLOCK_FK", "REASON_DESC")
+outage$TR_TIME <- as.Date(outage$TR_TIME, format="%d-%b-%y")
+outage$TR_TIME_CLOCK_FK <- format(as.POSIXct((outage$TR_TIME_CLOCK_FK), origin = "1970-01-01", tz = "UTC"), "%H")
+outage$Date <- as.POSIXct(paste(as.character(outage$TR_TIME), outage$TR_TIME_CLOCK_FK), format=c('%Y-%m-%d %H'))
+drops <- c("TR_TIME", "TR_TIME_CLOCK_FK", "REASON_DESC")
 outage <- outage[ , !(names(outage) %in% drops)]
 
 # Removing NAs
@@ -31,7 +31,7 @@ Regions <- read.csv("data/regions.csv", header = TRUE)
 region_assign <- function(Regions, Outage_row){
         dist <- c()
         for (metar_rows in 1:length(Regions$Metar)){
-                dist <-c(dist, distm(c(Outage_row$LONGITUDE, Outage_row$LATITUDE), c(Regions[metar_rows, 2], Regions[metar_rows, 3]), fun = distHaversine))
+                dist <-c(dist, distm(c(Outage_row$LONG, Outage_row$LAT), c(Regions[metar_rows, 2], Regions[metar_rows, 3]), fun = distHaversine))
         }
         
         return(as.character(Regions[which.min(dist), 1]) )
