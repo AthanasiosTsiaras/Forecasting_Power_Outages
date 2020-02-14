@@ -12,6 +12,7 @@ def model_ranking(X, y):
     from sklearn.model_selection import RandomizedSearchCV
     import warnings
     import random
+    import matplotlib.pyplot as plt
     random.seed(69)
     warnings.filterwarnings('ignore')
 
