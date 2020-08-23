@@ -68,14 +68,11 @@ historic$Y <- ifelse(is.na(historic$FAC_TYPE_DESC), 0, 1)
 historic$Y <- as.factor(historic$Y)
 historic <- historic %>% arrange(FAIL_FAC_ID, desc(Y)) %>% fill(names(outage[, c(2:10, 12)]), .direction = "down")
 
-#historic <- historic %>% arrange(Date) %>% fill(names(outage[, c(2:10, 12)]), .direction = "up")
+
 historic <- historic[complete.cases(historic),]
 
 final <- inner_join(weather, historic, by = c("Date", "METAR_ID"))
-#rm(outage, historic, weather)
 
-# final <- final %>% select(-c( DI_NORL_RADIATION, DIFF_HOZ_RADIATION,
-#                              DOWN_SLR_RAD, UPSTR_MUL_DEV, MWF_REGION))
 final <- final %>% select(-c( DI_NORL_RADIATION, DIFF_HOZ_RADIATION,
                               DOWN_SLR_RAD, UPSTR_MUL_DEV)) # With Region
 
